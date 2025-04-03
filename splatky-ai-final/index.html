@@ -1,0 +1,74 @@
+
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SplatkyProVsechny.cz</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; }
+    #chatbot-container { position: fixed; bottom: 20px; right: 20px; width: 300px; max-height: 500px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+    #chatbot-header { background: #1e40af; color: white; padding: 10px; text-align: center; font-weight: bold; }
+    #chatbot-messages { flex: 1; padding: 10px; overflow-y: auto; }
+    .msg { margin: 5px 0; }
+    .user { text-align: right; }
+    .bot { text-align: left; color: #1e40af; }
+    #chatbot-input { display: flex; border-top: 1px solid #ccc; }
+    #chatbot-input input { flex: 1; padding: 10px; border: none; }
+    #chatbot-input button { background: #1e40af; color: white; border: none; padding: 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="chatbot-container">
+    <div id="chatbot-header">💬 Gulinho AI</div>
+    <div id="chatbot-messages">
+      <div class="msg bot">Čau! Jsem Gulinho bot, co ti pomůže s čímkoli na splátky. Co chceš vědět?</div>
+    </div>
+    <div id="chatbot-input">
+      <input type="text" id="user-input" placeholder="Napiš mi sem…" />
+      <button onclick="sendMessage()">📩</button>
+    </div>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById('user-input');
+      const message = input.value.trim();
+      if (!message) return;
+
+      const messages = document.getElementById('chatbot-messages');
+      const userMsg = document.createElement('div');
+      userMsg.className = 'msg user';
+      userMsg.textContent = message;
+      messages.appendChild(userMsg);
+
+      const botMsg = document.createElement('div');
+      botMsg.className = 'msg bot';
+      botMsg.textContent = 'Přemýšlím...';
+      messages.appendChild(botMsg);
+
+      input.value = '';
+      messages.scrollTop = messages.scrollHeight;
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: [{ role: "user", content: message }]
+          })
+        });
+
+        const data = await response.json();
+        const reply = data.choices?.[0]?.message?.content || 'Něco se pokazilo. Zkus to znovu.';
+
+        botMsg.textContent = reply;
+        messages.scrollTop = messages.scrollHeight;
+      } catch (error) {
+        botMsg.textContent = 'Chyba při komunikaci s AI. Zkus to prosím později.';
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>
